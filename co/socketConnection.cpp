@@ -443,7 +443,7 @@ void SocketConnection::readNB(void* buffer, const uint64_t bytes)
     if (isClosed())
         return;
 
-    WSABUF wsaBuffer = {LB_MIN(bytes, 65535), reinterpret_cast<char*>(buffer)};
+    WSABUF wsaBuffer = {LB_MIN(static_cast<ULONG>(bytes), 65535), reinterpret_cast<char*>(buffer)};
     DWORD flags = 0;
 
     ResetEvent(_overlappedRead.hEvent);
@@ -535,7 +535,7 @@ int64_t SocketConnection::write(const void* buffer, const uint64_t bytes)
         return -1;
 
     DWORD wrote;
-    WSABUF wsaBuffer = {LB_MIN(bytes, 65535),
+    WSABUF wsaBuffer = {LB_MIN(static_cast<ULONG>(bytes), 65535),
                         const_cast<char*>(static_cast<const char*>(buffer))};
 
     ResetEvent(_overlappedWrite.hEvent);

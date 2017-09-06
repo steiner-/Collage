@@ -27,7 +27,7 @@
 #include <lunchbox/array.h> // used inline
 #include <lunchbox/bitOperation.h>
 
-#include <boost/type_traits.hpp>
+#include <type_traits>
 #include <map>
 #include <set>
 #include <unordered_map>
@@ -69,7 +69,7 @@ public:
     template <class T>
     DataIStream& operator>>(T& value)
     {
-        _read(value, boost::has_trivial_copy<T>());
+        _read(value, std::is_trivially_copyable<T>());
         return *this;
     }
 
@@ -77,7 +77,7 @@ public:
     template <class T>
     DataIStream& operator>>(Array<T> array)
     {
-        _readArray(array, boost::has_trivial_copy<T>());
+        _readArray(array, std::is_trivially_copyable<T>());
         return *this;
     }
 
@@ -208,29 +208,38 @@ private:
 
     /** Read a plain data item. */
     template <class T>
-    void _read(T& value, const boost::true_type&)
+    void _read(T& value, const std::true_type&)
     {
         _read(&value, sizeof(value));
     }
 
     /** Read a non-plain data item. */
     template <class T>
-    void _read(T& value, const boost::false_type&)
+    void _read(T& value, const std::false_type&)
     {
-        _readSerializable(value, boost::is_base_of<servus::Serializable, T>());
+		constexpr bool isSerializable = std::is_base_of<servus::Serializable, T>::value;
+//		static_assert(isSerializable, "Attempting to read non-serializable object");
+        _readSerializable(value, std::integral_constant<bool, isSerializable>());
     }
+
+	/** Read a non-serializable object as plain data item (fallback). */
+	template <class T>
+	void _readSerializable(T& value, const std::false_type&)
+	{
+		_read(&value, sizeof(value));
+	}
 
     /** Read a serializable object. */
     template <class T>
-    void _readSerializable(T& value, const boost::true_type&);
+    void _readSerializable(T& value, const std::true_type&);
 
     /** Read an Array of POD data */
     template <class T>
-    void _readArray(Array<T>, const boost::true_type&);
+    void _readArray(Array<T>, const std::true_type&);
 
     /** Read an Array of non-POD data */
     template <class T>
-    void _readArray(Array<T>, const boost::false_type&);
+    void _readArray(Array<T>, const std::false_type&);
 };
 }
 

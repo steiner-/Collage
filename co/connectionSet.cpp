@@ -552,7 +552,7 @@ bool ConnectionSet::_setupFDSet()
     _impl->fdSetResult.append(res);
 
     // add regular connections
-    _impl->lock.set();
+    _impl->lock.lock();
     for (ConnectionsCIter i = _impl->connections.begin();
          i != _impl->connections.end(); ++i)
     {
@@ -565,7 +565,7 @@ bool ConnectionSet::_setupFDSet()
                     << ", connection does not provide a read handle"
                     << std::endl;
             _impl->connection = connection;
-            _impl->lock.unset();
+            _impl->lock.unlock();
             return false;
         }
 
@@ -588,7 +588,7 @@ bool ConnectionSet::_setupFDSet()
         result.thread = thread;
         _impl->fdSetResult.append(result);
     }
-    _impl->lock.unset();
+    _impl->lock.unlock();
 #else // _WIN32
     pollfd fd;
     fd.events = POLLIN;
