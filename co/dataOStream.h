@@ -29,7 +29,7 @@
 #include <lunchbox/array.h> // used inline
 
 #include <boost/noncopyable.hpp>
-#include <type_traits>
+#include <boost/type_traits.hpp>
 #include <map>
 #include <set>
 #include <unordered_map>
@@ -90,7 +90,7 @@ public:
     template <class T>
     DataOStream& operator<<(const T& value)
     {
-        _write(value, std::is_trivially_copyable<T>());
+        _write(value, typename boost::is_pod<T>());
         return *this;
     }
 
@@ -98,7 +98,7 @@ public:
     template <class T>
     DataOStream& operator<<(const Array<T> array)
     {
-        _writeArray(array, std::is_trivially_copyable<T>());
+        _writeArray(array, typename boost::has_trivial_copy<T>());
         return *this;
     }
 
@@ -229,41 +229,41 @@ private:
 
     /** Write a plain data item. */
     template <class T>
-    void _write(const T& value, const std::true_type&)
+    void _write(const T& value, boost::true_type)
     {
         _write(&value, sizeof(value));
     }
 
     /** Write a non-plain data item. */
     template <class T>
-    void _write(const T& value, const std::false_type&)
+    void _write(const T& value, boost::false_type)
     {
 		constexpr bool isSerializable = std::is_base_of<servus::Serializable, T>::value;
-//		static_assert(isSerializable, "Attempting to write non-serializable object");
-        _writeSerializable(value, std::integral_constant<bool, isSerializable>());
+//	static_assert(isSerializable, "Attempting to write non-serializable object");
+        _writeSerializable(value, boost::integral_constant<bool, isSerializable>());
     }
 
     /** Write a serializable object. */
     template <class T>
-    void _writeSerializable(const T& value, const std::true_type&);
+    void _writeSerializable(const T& value, boost::true_type);
 
 	/** Write a non-serializable object as plain data item (fallback). */
 	template <class T>
-	void _writeSerializable(const T& value, const std::false_type&)
+	void _writeSerializable(const T& value, boost::false_type)
 	{
 		_write(&value, sizeof(value));
 	}
 
     /** Write an Array of POD data */
     template <class T>
-    void _writeArray(const Array<T> array, const std::true_type&)
+    void _writeArray(const Array<T> array, boost::true_type)
     {
         _write(array.data, array.getNumBytes());
     }
 
     /** Write an Array of non-POD data */
     template <class T>
-    void _writeArray(const Array<T> array, const std::false_type&)
+    void _writeArray(const Array<T> array, boost::false_type)
     {
         for (size_t i = 0; i < array.num; ++i)
             *this << array.data[i];

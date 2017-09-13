@@ -57,7 +57,7 @@ inline DataIStream& DataIStream::operator>>(Object*& object)
 
 /** Deserialize an inline serializable object. */
 template <class T>
-void DataIStream::_readSerializable(T& object, const std::true_type&)
+void DataIStream::_readSerializable(T& object, boost::true_type)
 {
     const size_t size = read<size_t>();
     object.fromBinary(getRemainingBuffer(size), size);
@@ -65,21 +65,21 @@ void DataIStream::_readSerializable(T& object, const std::true_type&)
 
 /** @cond IGNORE */
 template <class T>
-void DataIStream::_readArray(Array<T> array, const std::true_type&)
+void DataIStream::_readArray(Array<T> array, boost::true_type)
 {
     _read(array.data, array.getNumBytes());
 }
 
 /** Read an Array of non-POD data */
 template <class T>
-void DataIStream::_readArray(Array<T> array, const std::false_type&)
+void DataIStream::_readArray(Array<T> array, boost::false_type)
 {
     for (size_t i = 0; i < array.num; ++i)
         *this >> array.data[i];
 }
 
 template <>
-inline void DataIStream::_readArray(Array<void> array, const std::false_type&)
+inline void DataIStream::_readArray(Array<void> array, boost::false_type)
 {
     _read(array.data, array.getNumBytes());
 }

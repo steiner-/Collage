@@ -47,7 +47,7 @@ inline DataOStream& DataOStream::operator<<(const Object* const& object)
 
 /** Serialize an inline serializable object. */
 template <class T>
-void DataOStream::_writeSerializable(const T& object, const std::true_type&)
+void DataOStream::_writeSerializable(const T& object, boost::true_type)
 {
     const auto& data = object.toBinary();
     (*this) << data.size << Array<const void>(data.ptr.get(), data.size);
@@ -55,14 +55,14 @@ void DataOStream::_writeSerializable(const T& object, const std::true_type&)
 
 template <>
 inline void DataOStream::_writeArray(const Array<void> array,
-                                     const std::false_type&)
+                                     boost::false_type)
 {
     _write(array.data, array.getNumBytes());
 }
 
 template <>
 inline void DataOStream::_writeArray(const Array<const void> array,
-                                     const std::false_type&)
+                                     boost::false_type)
 {
     _write(array.data, array.getNumBytes());
 }
